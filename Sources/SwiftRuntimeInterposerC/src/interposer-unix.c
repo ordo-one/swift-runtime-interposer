@@ -8,15 +8,18 @@
 // http://www.apache.org/licenses/LICENSE-2.0
 //
 
+// _GNU_SOURCE must be defined before the first libc header is included
+// (interposer.h pulls in stdlib.h) or dlfcn.h won't expose RTLD_NEXT.
+#define _GNU_SOURCE
+
+#include <interposer.h>
+
 #ifndef __APPLE__
 
-#define _GNU_SOURCE
 #include <dlfcn.h>
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-#include <interposer.h>
 
 typedef void *(*swift_allocObject_t)(const void *, size_t, size_t);
 typedef void *(*swift_retain_t)(void *);
@@ -350,6 +353,30 @@ void swift_bridgeObjectRelease_n(void *object, uint32_t n) {
     if (object && atomic_load_explicit(&s_counting_enabled, memory_order_relaxed)) {
         atomic_fetch_add_explicit(&s_release_count, n, memory_order_relaxed);
     }
+}
+
+#else
+
+// Interposition is Linux-only, but the control API must still link on Apple
+// platforms: SwiftRuntimeInterposerSwift ships as a dynamic library, which
+// resolves these symbols eagerly. Provide no-op stubs that report zero counts.
+// The swift_retain/release overrides above are deliberately NOT stubbed —
+// they must not exist on platforms where the interposer is inactive.
+
+void swift_runtime_interposer_enable(void) {}
+
+void swift_runtime_interposer_disable(void) {}
+
+void swift_runtime_interposer_reset(void) {}
+
+void swift_runtime_interposer_get_stats(
+    int64_t *alloc_count,
+    int64_t *retain_count,
+    int64_t *release_count
+) {
+    *alloc_count = 0;
+    *retain_count = 0;
+    *release_count = 0;
 }
 
 #endif
