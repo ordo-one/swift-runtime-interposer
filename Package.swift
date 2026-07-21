@@ -5,13 +5,14 @@ import PackageDescription
 let package = Package(
     name: "swift-runtime-interposer",
     products: [
-        .library(
-            name: "SwiftRuntimeInterposerC",
-            type: .dynamic,
-            targets: ["SwiftRuntimeInterposerC"]
-        ),
+        // The dylib to preload (LD_PRELOAD) and to link against from Swift
+        // code. Combines the C interposer with the Swift API in one image —
+        // the C target must not have its own dynamic product: it is linked
+        // statically into this dylib, and SwiftPM 6.4+ cannot build a target
+        // both statically and dynamically.
         .library(
             name: "SwiftRuntimeInterposerSwift",
+            type: .dynamic,
             targets: ["SwiftRuntimeInterposerSwift"]
         ),
     ],
