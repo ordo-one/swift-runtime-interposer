@@ -7,9 +7,11 @@ It exists primarily to support tools that need coarse ARC traffic statistics on 
 ## What it contains
 
 - `SwiftRuntimeInterposerC`
-  A dynamic library that interposes selected public Swift runtime symbols and counts allocations, retains, and releases.
+  A C library that interposes selected public Swift runtime symbols and counts allocations, retains, and releases.
 - `SwiftRuntimeInterposerSwift`
   A Swift wrapper that exposes a small API for enabling counting, disabling counting, resetting counters, and reading the current statistics.
+
+Both targets ship as a single dynamic library product, `SwiftRuntimeInterposerSwift` (`libSwiftRuntimeInterposerSwift.so`): the C interposer is statically linked into the dylib alongside the Swift API.
 
 ## How it works
 
@@ -40,14 +42,14 @@ Sources/
 Add the package dependency and use the Swift wrapper in your code:
 
 ```swift
-.package(url: "https://github.com/ordo-one/swift-runtime-interposer.git", .upToNextMajor(from: "1.0.0"))
+.package(url: "https://github.com/ordo-one/swift-runtime-interposer.git", .upToNextMajor(from: "2.0.0"))
 ```
 
 ```swift
 .product(name: "SwiftRuntimeInterposerSwift", package: "swift-runtime-interposer")
 ```
 
-If you need the interposer to actually intercept runtime calls, make sure the built `libSwiftRuntimeInterposerC.so` is loaded with `LD_PRELOAD` before launching the target process.
+If you need the interposer to actually intercept runtime calls, make sure the built `libSwiftRuntimeInterposerSwift.so` is loaded with `LD_PRELOAD` before launching the target process.
 
 ## License
 
